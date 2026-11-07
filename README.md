@@ -32,7 +32,7 @@ Remove a patch when upstream has the fix.
 
 | Patch | Bug |
 |---|---|
-| `0001-mark-empty-list.patch` | `POST /mark` with an empty list fails on PostgreSQL and MySQL: `IN ()` is invalid SQL. |
+| `0001-mark-empty-list.patch` | `POST /mark` with an empty list fails on PostgreSQL and MySQL: `IN ()` is invalid SQL. Upstream: [fossar/selfoss#1667](https://github.com/fossar/selfoss/pull/1667). |
 
 ## Configuration
 
