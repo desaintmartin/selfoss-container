@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "git-submodules": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "selfoss has no recent release: follow its master branch commit by commit.",
+      "matchManagers": ["git-submodules"],
+      "schedule": ["before 6am on monday"],
+      "automerge": true
+    },
+    {
+      "description": "Base images and actions: one weekly pull request.",
+      "matchManagers": ["dockerfile", "github-actions"],
+      "groupName": "build tooling",
+      "schedule": ["before 6am on monday"]
+    }
+  ]
+}

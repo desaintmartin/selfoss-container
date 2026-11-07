@@ -1,0 +1,4 @@
+[submodule "selfoss"]
+	path = selfoss
+	url = https://github.com/fossar/selfoss.git
+	branch = master

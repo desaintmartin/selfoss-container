@@ -1,0 +1,8 @@
+# Build context: the selfoss sources only, without VCS data, tests or documentation.
+**/.git
+.github
+selfoss/client/node_modules
+selfoss/vendor
+selfoss/public
+selfoss/tests
+selfoss/docs
