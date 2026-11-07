@@ -1,5 +1,6 @@
-# Build the image on every push and pull request. Publish it to GHCR from main only.
-name: image
+# Build the image and the chart on every push and pull request. Publish both to GHCR from main only.
+# The chart version is <major>.<minor> from Chart.yaml plus the run number.
+name: release
 
 on:
   push:
@@ -7,12 +8,18 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/selfoss
+  CHARTS: oci://ghcr.io/${{ github.repository_owner }}/charts
 
 jobs:
-  build:
+  image:
     runs-on: ubuntu-latest
+    outputs:
+      upstream: ${{ steps.upstream.outputs.sha }}
     permissions:
       contents: read
       packages: write
@@ -56,3 +63,29 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  chart:
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: azure/setup-helm@v4
+
+      - name: Lint
+        run: helm lint charts/selfoss
+
+      - name: Package
+        run: |
+          base=$(yq '.version' charts/selfoss/Chart.yaml)
+          version="${base%.*}.${GITHUB_RUN_NUMBER}"
+          helm package charts/selfoss --version "$version" --app-version "${{ needs.image.outputs.upstream }}"
+
+      - name: Push
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+          helm push selfoss-*.tgz "$CHARTS"

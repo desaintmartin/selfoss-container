@@ -1,0 +1,78 @@
+image:
+  repository: ghcr.io/desaintmartin/selfoss
+  # Empty: the chart appVersion, which is the selfoss commit of the chart.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# selfoss settings, without the SELFOSS_ prefix. Each key becomes the variable SELFOSS_<KEY>.
+# Reference: https://selfoss.aditu.de/docs/administration/options/
+# PostgreSQL keys: db_type (pgsql), db_host, db_database, db_username.
+config:
+  # Logs go to the container output.
+  logger_destination: error_log
+
+# Secret with more SELFOSS_* variables, loaded as environment.
+# Use it for SELFOSS_DB_PASSWORD and SELFOSS_PASSWORD (the hash from the /password page).
+existingSecret: ""
+
+extraEnv: []
+
+# Feed updater: a sidecar container runs cliupdate.php in a loop.
+updater:
+  enabled: true
+  # Seconds between two updates.
+  intervalSeconds: 900
+  resources: {}
+
+# data/ holds favicons, thumbnails, cache and, with SQLite, the database.
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClass: ""
+  accessModes: [ReadWriteOnce]
+  size: 1Gi
+
+service:
+  type: ClusterIP
+  port: 80
+
+# Gateway API route. parentRefs example: [{name: main, namespace: gateway}].
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+
+# Ingress. hosts example: [{host: selfoss.example.com}].
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+resources: {}
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 33
+  runAsGroup: 33
+  fsGroup: 33
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

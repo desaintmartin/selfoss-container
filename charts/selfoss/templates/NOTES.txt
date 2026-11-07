@@ -1,0 +1,11 @@
+selfoss {{ .Chart.AppVersion }} is installed as {{ include "selfoss.fullname" . }}.
+{{- if .Values.httpRoute.enabled }}
+URL: {{ range .Values.httpRoute.hostnames }}http://{{ . }} {{ end }}
+{{- else if .Values.ingress.enabled }}
+URL: {{ range .Values.ingress.hosts }}http://{{ .host }} {{ end }}
+{{- else }}
+Local access: kubectl port-forward svc/{{ include "selfoss.fullname" . }} 8080:{{ .Values.service.port }}
+{{- end }}
+{{- if not .Values.existingSecret }}
+No secret: selfoss runs without login. Set SELFOSS_USERNAME and SELFOSS_PASSWORD in existingSecret.
+{{- end }}

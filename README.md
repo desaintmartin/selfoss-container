@@ -57,12 +57,45 @@ php /var/www/html/cliupdate.php
 
 On Kubernetes, use a sidecar container that runs the updater in a loop, or a CronJob.
 The updater writes favicons and thumbnails in `/var/www/html/data`: it needs the same volume as the web container.
+The Helm chart below uses a sidecar.
+
+## Helm chart
+
+`oci://ghcr.io/desaintmartin/charts/selfoss`. Each build of `main` publishes a chart version `<major>.<minor>.<run number>`, with the image of the same build as `appVersion`.
+
+The chart deploys:
+
+- a Deployment with the web container and an updater sidecar that runs `cliupdate.php` every 15 minutes (`updater.intervalSeconds`);
+- a Service, a PersistentVolumeClaim for `data/`, and an optional HTTPRoute or Ingress.
+
+The chart has no database. Use SQLite on the volume, or point selfoss to your own PostgreSQL or MySQL server:
+
+```yaml
+config:
+  db_type: pgsql
+  db_host: selfoss-db-rw
+  db_database: selfoss
+  db_username: selfoss
+# Secret with SELFOSS_DB_PASSWORD, SELFOSS_USERNAME and SELFOSS_PASSWORD.
+existingSecret: selfoss
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: main
+      namespace: gateway
+  hostnames:
+    - rss.example.com
+```
+
+```sh
+helm install selfoss oci://ghcr.io/desaintmartin/charts/selfoss -f values.yaml
+```
 
 ## Build
 
 ```sh
-git clone --recurse-submodules https://github.com/desaintmartin/selfoss-docker.git
-cd selfoss-docker
+git clone --recurse-submodules https://github.com/desaintmartin/selfoss-container.git
+cd selfoss-container
 docker buildx build -t selfoss .
 ```
 

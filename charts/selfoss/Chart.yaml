@@ -1,0 +1,13 @@
+apiVersion: v2
+name: selfoss
+description: selfoss, the multipurpose RSS reader, live stream, mashup and aggregation web application
+type: application
+# CI publishes <major>.<minor>.<run number>. Change major or minor here for chart changes.
+version: 0.1.0
+# CI sets appVersion to the short commit of the selfoss submodule.
+appVersion: "3f56000a"
+home: https://github.com/desaintmartin/selfoss-container
+sources:
+  - https://github.com/desaintmartin/selfoss-container
+  - https://github.com/fossar/selfoss
+keywords: [rss, atom, feed-reader, selfoss]

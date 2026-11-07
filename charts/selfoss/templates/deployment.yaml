@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "selfoss.fullname" . }}
+  labels:
+    {{- include "selfoss.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # Recreate: the data volume is ReadWriteOnce.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "selfoss.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ toJson .Values.config | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "selfoss.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.persistence.enabled }}
+      # The volume hides the data/ skeleton of the image: copy the missing directories.
+      initContainers:
+        - name: init-data
+          image: {{ include "selfoss.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [sh, -c, "cp -an /var/www/html/data/. /mnt/data/"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /mnt/data
+      {{- end }}
+      containers:
+        - name: selfoss
+          image: {{ include "selfoss.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            {{- include "selfoss.env" . | nindent 12 }}
+          {{- include "selfoss.envFrom" . | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /api/about
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html/data
+        {{- if .Values.updater.enabled }}
+        - name: updater
+          image: {{ include "selfoss.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - while true; do php /var/www/html/cliupdate.php; sleep {{ .Values.updater.intervalSeconds }}; done
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            {{- include "selfoss.env" . | nindent 12 }}
+          {{- include "selfoss.envFrom" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.updater.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html/data
+        {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "selfoss.fullname" .) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
