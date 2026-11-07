@@ -33,11 +33,12 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if .Values.persistence.enabled }}
       # The volume hides the data/ skeleton of the image: copy the missing directories.
+      # No -a: the volume root belongs to root, and www-data cannot set its times.
       initContainers:
         - name: init-data
           image: {{ include "selfoss.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: [sh, -c, "cp -an /var/www/html/data/. /mnt/data/"]
+          command: [sh, -c, "cp -Rn /var/www/html/data/. /mnt/data/"]
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
