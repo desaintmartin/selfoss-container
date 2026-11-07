@@ -25,6 +25,15 @@ The image contains:
 
 Apache listens on port 8080 and runs as `www-data` (UID 33).
 
+## Patches
+
+`patches/` holds fixes for selfoss bugs that are not yet in upstream `master`. The build applies them to `src/` with `patch -p1`.
+Remove a patch when upstream has the fix.
+
+| Patch | Bug |
+|---|---|
+| `0001-mark-empty-list.patch` | `POST /mark` with an empty list fails on PostgreSQL and MySQL: `IN ()` is invalid SQL. |
+
 ## Configuration
 
 selfoss reads every setting from environment variables with the `SELFOSS_` prefix.

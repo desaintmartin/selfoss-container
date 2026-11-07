@@ -1,6 +1,12 @@
 # syntax=docker/dockerfile:1
 # Container image for selfoss. The selfoss sources come from the "selfoss" git submodule.
 
+### Stage 0: PHP sources with the patches of this repository (patches/*.patch, applied with -p1)
+FROM alpine:3.22 AS source
+COPY selfoss/src/ /src/src/
+COPY patches/ /patches/
+RUN set -eu; apk add --no-cache patch; for p in /patches/*.patch; do patch -p1 -d /src < "$p"; done
+
 ### Stage 1: build the web client
 FROM node:24.22.2-trixie-slim AS client
 WORKDIR /build
@@ -51,7 +57,7 @@ RUN set -eux; \
 
 WORKDIR /var/www/html
 # Same file set as the upstream release zipball (utils/create-zipball.py).
-COPY --chown=www-data:www-data selfoss/src/ src/
+COPY --from=source --chown=www-data:www-data /src/src/ src/
 COPY --chown=www-data:www-data selfoss/data/ data/
 COPY --chown=www-data:www-data selfoss/.htaccess selfoss/index.php selfoss/run.php selfoss/cliupdate.php ./
 COPY --from=vendor --chown=www-data:www-data /build/vendor/ vendor/
