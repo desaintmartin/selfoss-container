@@ -25,6 +25,7 @@ FROM php:8.4.27-apache-trixie
 # Build packages are removed after the extensions compile; only the runtime libraries stay.
 # selfoss reads its SELFOSS_* settings from $_ENV. The production php.ini leaves $_ENV empty ("GPCS"):
 # without "E", selfoss falls back to SQLite without any error.
+# The updater needs more than the 128M of php.ini-production for large feeds.
 RUN set -eux; \
     export DEBIAN_FRONTEND=noninteractive; \
     apt-get update; \
@@ -37,7 +38,7 @@ RUN set -eux; \
     apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*; \
     cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"; \
-    printf 'variables_order = "EGPCS"\n' > "$PHP_INI_DIR/conf.d/selfoss.ini"
+    printf 'variables_order = "EGPCS"\nmemory_limit = 512M\n' > "$PHP_INI_DIR/conf.d/selfoss.ini"
 
 # Apache listens on 8080: the container runs as www-data, which cannot bind port 80.
 # selfoss routes requests through its .htaccess rewrite rules.

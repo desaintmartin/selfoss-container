@@ -13,11 +13,12 @@ The upstream discussion is in [fossar/selfoss#1433](https://github.com/fossar/se
 | Tag | Content |
 |---|---|
 | `latest` | Last build of the `main` branch |
-| `<upstream short commit>` | Build of that selfoss commit, for example `3f56000a` |
+| `<upstream short commit>` | Last build of that selfoss commit, for example `3f56000a` |
+| `<upstream short commit>-<run>` | One build, immutable, for example `3f56000a-3`. The chart uses it as `appVersion`. |
 
 The image contains:
 
-- PHP 8.4 with Apache, `mod_rewrite` and the selfoss `.htaccess` rules.
+- PHP 8.4 with Apache, `mod_rewrite` and the selfoss `.htaccess` rules. `memory_limit` is 512M: large feeds need more than 128M.
 - The PHP extensions `gd` (JPEG, PNG, WebP), `pdo_sqlite`, `pdo_pgsql`, `pdo_mysql` and `tidy`.
 - The web client, built with Node.js 24.
 - The same file set as the upstream release zipball.
